@@ -1,0 +1,7 @@
+/env/
+/__pycache__/
+/datasets/
+/segmented_chars/
+/debug/
+preprocess_dataset.py
+plate.yaml
