@@ -1,40 +1,60 @@
 import cv2
 import sys
-from ultralytics import YOLO
 from segmentation import get_character_images
-from detection import get_plate_images, get_detected_boxes
-from prediction import get_plate_string
-from tools import draw_prediction_canvas
+from detection import Detection
+    
 
 # Example usage
 if __name__ == "__main__":
     if len(sys.argv) != 3:
         raise Exception("Need args")
     if sys.argv[1] == "--detection":
-        model = YOLO("runs/detect/train/weights/best.pt")
+        detection = Detection(
+            model_yolo_path="runs/detect/train5/weights/best.onnx",
+            model_cnn_path="cnn_model/best.keras",
+            debug=True,
+            debug_dir="debug/number_plates/"
+        )
         image = cv2.imread(sys.argv[2])
-        plate_boxes = get_detected_boxes(model, sys.argv[2])
-        get_plate_images(plate_boxes, sys.argv[2], debug=True)
+        plate_boxes = detection.get_detected_boxes(image)
+        detection.get_plate_images(plate_boxes, image)
         print("Number plate Images saved in debug/number_plates/ directory")
+    
+    elif sys.argv[1] == "--full-image":
+        image = cv2.imread(sys.argv[2])
+        detection = Detection(
+            model_yolo_path="runs/detect/train5/weights/best.onnx",
+            model_cnn_path="cnn_model/best.keras",
+            debug=True,
+            debug_dir="debug/number_plates/"
+        )
+        detection.detect(image)
+
+    elif sys.argv[1] == "--full-video":
+        detection = Detection(
+            model_yolo_path="runs/detect/train5/weights/best.onnx",
+            model_cnn_path="cnn_model/best.keras",
+            debug=False,
+            debug_dir="debug/number_plates/"
+        )
+        capture = cv2.VideoCapture(sys.argv[2])
+        while capture.isOpened():
+            ret, frame = capture.read()
+            if not ret:
+                break
+            detection.detect(frame)
+            frame = cv2.resize(frame, (1280, 780))
+            cv2.imshow("Number Plate recognition", frame)
+            if cv2.waitKey(1) & 0xFF == ord('q'):
+                break
+        capture.release()
+        cv2.destroyAllWindows()
     
     elif sys.argv[1] == "--segmentation":
         plate_image = cv2.imread(sys.argv[2])
         get_character_images(plate_image, debug=True)
         print("Segmented characters save in debug/segmentation/ directory")
     
-    elif sys.argv[1] == "--full":
-        nb_plates = 0
-        model = YOLO("runs/detect/train/weights/best.pt")
-        image = cv2.imread(sys.argv[2])
-        plate_boxes = get_detected_boxes(model, image)
-        plate_images = get_plate_images(plate_boxes, image, debug=True)
-        for plate_image, plate_box in zip(plate_images, plate_boxes):
-            plate_string = get_plate_string(plate_image)
-            image_copy = image.copy()
-            draw_prediction_canvas(image_copy, plate_box, plate_string)
-            cv2.imwrite(f"debug/number_plates/{nb_plates}_plates.jpg", image_copy)
-            print("🔤 Recognized Plate:", plate_string)
-            nb_plates += 1
     else:
         raise Exception("Unexpected")
 

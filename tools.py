@@ -8,11 +8,20 @@ def auto_canny(image, sigma=0.33):
     edged = cv2.Canny(image, lower, upper)
     return edged
 
-def draw_contours(image, bounding_boxes, output_dir):
+def draw_contours(image, bounding_boxes, debug_dir):
     image_copy = image.copy()
     for x, y, w, h in bounding_boxes:
         cv2.rectangle(image_copy, (x, y), (x + w, y + h), (0, 255, 0), 1)
-        cv2.imwrite(f"{output_dir}/contours.jpg", image_copy)
+        cv2.imwrite(f"{debug_dir}/contours.jpg", image_copy)
+
+def get_label_map():
+    class_names = {}
+    for i in range(36):
+        if i < 10:
+            class_names[i] = chr(ord('0') + i)
+            continue
+        class_names[i] = chr(ord('A') + (i - 10))
+    return class_names
 
 def draw_prediction_canvas(image, plate_box, plate_string):
     x1, y1, x2, y2 = map(int, plate_box)

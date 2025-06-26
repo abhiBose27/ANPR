@@ -5,3 +5,4 @@
 /debug/
 preprocess_dataset.py
 plate.yaml
+yolov8n.pt
