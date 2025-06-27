@@ -15,13 +15,13 @@ class Detection:
         detected_boxes = []
         for box, conf, cls in zip(result.boxes.xyxy, result.boxes.conf, result.boxes.cls):
             if conf.item() > conf_threshold:
-                detected_boxes.append(box)
+                x1, y1, x2, y2 = map(int, box)
+                detected_boxes.append((x1, y1, x2, y2))
         return detected_boxes
     
     def get_plate_images(self, plate_boxes, image):
         plate_images = []
-        for i, box in enumerate(plate_boxes):
-            x1, y1, x2, y2 = map(int, box)
+        for i, (x1, y1, x2, y2) in enumerate(plate_boxes):
             plate_image = image[y1:y2, x1:x2]
             if self.debug:
                 cv2.imwrite(f"{self.debug_dir}/{i}_original.jpg", plate_image)
@@ -42,14 +42,4 @@ class Detection:
             nb_plates += 1
             print("🔤 Recognized Plate:", plate_string)
 
-def get_highest_area_box(boxes):
-    highest_area = 0
-    highest_area_box = None
-    for box in boxes:
-        x1, y1, x2, y2 = map(int, box)
-        box_area = (x2 - x1) * (y2 - y1)
-        if box_area > highest_area:
-            highest_area = box_area
-            highest_area_box = box
-    return highest_area_box
 

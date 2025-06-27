@@ -10,7 +10,7 @@ if __name__ == "__main__":
         raise Exception("Need args")
     if sys.argv[1] == "--detection":
         detection = Detection(
-            model_yolo_path="runs/detect/train/weights/best.onnx",
+            model_yolo_path="runs/detect/train7/weights/best.pt",
             model_cnn_path="cnn_model/best.keras",
             debug=True,
             debug_dir="debug/number_plates/"
@@ -23,7 +23,7 @@ if __name__ == "__main__":
     elif sys.argv[1] == "--full-image":
         image = cv2.imread(sys.argv[2])
         detection = Detection(
-            model_yolo_path="runs/detect/train/weights/best.onnx",
+            model_yolo_path="runs/detect/train7/weights/best.pt",
             model_cnn_path="cnn_model/best.keras",
             debug=True,
             debug_dir="debug/number_plates/"
@@ -32,7 +32,7 @@ if __name__ == "__main__":
 
     elif sys.argv[1] == "--full-video":
         detection = Detection(
-            model_yolo_path="runs/detect/train/weights/best.onnx",
+            model_yolo_path="runs/detect/train7/weights/best.pt",
             model_cnn_path="cnn_model/best.keras",
             debug=False,
             debug_dir="debug/number_plates/"

@@ -24,7 +24,7 @@ def get_label_map():
     return class_names
 
 def draw_prediction_canvas(image, plate_box, plate_string):
-    x1, y1, x2, y2 = map(int, plate_box)
+    x1, y1, x2, y2 = plate_box
     h, w = image.shape[:2]
 
     # Step 1: Dynamic font scale based on image width

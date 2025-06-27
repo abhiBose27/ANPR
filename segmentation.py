@@ -2,6 +2,7 @@ import cv2
 import numpy as np
 from tools import draw_contours
 
+
 def _get_preprocessed_image(plate_image, debug_dir, debug):
     gray = cv2.cvtColor(plate_image, cv2.COLOR_BGR2GRAY)
     blurred = cv2.bilateralFilter(gray, 11, 17, 17)
@@ -28,9 +29,17 @@ def _get_bounding_boxes(preprocessed_image):
     bounding_boxes = []
     for i, (x, y, w, h) in enumerate(sorted_boxes):
         roi_area = w * h
+        aspect_ratio = w / float(h)
+        roi = preprocessed_image[y : y + h, x : x + w]
+        black_pixels = (w * h) - cv2.countNonZero(roi)  # white = nonzero
+        black_ratio = black_pixels / (w * h)
         if h / float(w) < 1.2:
             continue
+        if not (0.15 < aspect_ratio < 1.0):
+            continue
         if roi_area < 100:
+            continue
+        if not (0.25 < black_ratio < 0.8):
             continue
         bounding_boxes.append((x, y, w, h))
     median_height = np.median([h for _, _, _, h in bounding_boxes])
