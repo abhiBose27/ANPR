@@ -2,7 +2,6 @@ import cv2
 import sys
 from segmentation import get_character_images
 from detection import Detection
-    
 
 # Example usage
 if __name__ == "__main__":
@@ -10,7 +9,7 @@ if __name__ == "__main__":
         raise Exception("Need args")
     if sys.argv[1] == "--detection":
         detection = Detection(
-            model_yolo_path="runs/detect/train7/weights/best.pt",
+            model_yolo_path="runs/detect/train10/weights/best.pt",
             model_cnn_path="cnn_model/best.keras",
             debug=True,
             debug_dir="debug/number_plates/"
@@ -23,18 +22,18 @@ if __name__ == "__main__":
     elif sys.argv[1] == "--full-image":
         image = cv2.imread(sys.argv[2])
         detection = Detection(
-            model_yolo_path="runs/detect/train7/weights/best.pt",
+            model_yolo_path="runs/detect/train10/weights/best.pt",
             model_cnn_path="cnn_model/best.keras",
             debug=True,
             debug_dir="debug/number_plates/"
         )
-        detection.detect(image)
+        detection.detect_image(image)
 
     elif sys.argv[1] == "--full-video":
         detection = Detection(
-            model_yolo_path="runs/detect/train7/weights/best.pt",
+            model_yolo_path="runs/detect/train10/weights/best.pt",
             model_cnn_path="cnn_model/best.keras",
-            debug=False,
+            debug=True,
             debug_dir="debug/number_plates/"
         )
         capture = cv2.VideoCapture(sys.argv[2])
@@ -42,13 +41,14 @@ if __name__ == "__main__":
             ret, frame = capture.read()
             if not ret:
                 break
-            detection.detect(frame)
+            detection.detect_video(frame)
             frame = cv2.resize(frame, (1280, 780))
             cv2.imshow("Number Plate recognition", frame)
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
         capture.release()
         cv2.destroyAllWindows()
+        detection.log_seen_plate_info()
     
     elif sys.argv[1] == "--segmentation":
         plate_image = cv2.imread(sys.argv[2])

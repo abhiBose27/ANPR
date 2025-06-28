@@ -1,4 +1,5 @@
 import cv2
+import datetime
 import numpy as np
 from tools import draw_contours
 
@@ -12,14 +13,16 @@ def _get_preprocessed_image(plate_image, debug_dir, debug):
         blurred, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
         cv2.THRESH_BINARY, 41, 12)
     
-    rect_kern = cv2.getStructuringElement(cv2.MORPH_RECT, (2, 1))
-    dilation = cv2.dilate(thresh, rect_kern, iterations=1)
-
+    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (2, 1))
+    eroded = cv2.erode(thresh, kernel, iterations=1)
+    dilation = cv2.dilate(eroded, kernel, iterations=3)
+    ts = datetime.datetime.now().timestamp() * 1000000
     if debug:
-        cv2.imwrite(f"{debug_dir}/0_gray.jpg", gray)
-        cv2.imwrite(f"{debug_dir}/1_blurred.jpg", blurred)
-        cv2.imwrite(f"{debug_dir}/2_thresh.jpg", thresh)
-        cv2.imwrite(f"{debug_dir}/3_mask.jpg", dilation)
+        cv2.imwrite(f"{debug_dir}/gray/{ts}_gray.jpg", gray)
+        cv2.imwrite(f"{debug_dir}/blurred/{ts}_blurred.jpg", blurred)
+        cv2.imwrite(f"{debug_dir}/thresh/{ts}_thresh.jpg", thresh)
+        cv2.imwrite(f"{debug_dir}/eroded/{ts}_eroded.jpg", eroded)
+        cv2.imwrite(f"{debug_dir}/dilation/{ts}_dilation.jpg", dilation)
     return dilation
 
 def _get_bounding_boxes(preprocessed_image):
@@ -33,11 +36,7 @@ def _get_bounding_boxes(preprocessed_image):
         roi = preprocessed_image[y : y + h, x : x + w]
         black_pixels = (w * h) - cv2.countNonZero(roi)  # white = nonzero
         black_ratio = black_pixels / (w * h)
-        if h / float(w) < 1.2:
-            continue
-        if not (0.15 < aspect_ratio < 1.0):
-            continue
-        if roi_area < 100:
+        if w > h or not (0.2 < aspect_ratio < 0.8) or roi_area < 100:
             continue
         if not (0.25 < black_ratio < 0.8):
             continue
