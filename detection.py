@@ -15,13 +15,12 @@ class Detection:
         self.model = YOLO(model_yolo_path)
         self.prediction = Prediction(model_cnn_path, debug) 
 
-    def get_detected_boxes(self, image, conf_threshold=0.7):
+    def get_detected_boxes(self, image):
         result = self.model(image, imgsz=320, conf=0.6)[0]
         detected_boxes = []
         for box in result.boxes.data.tolist():
             x1, y1, x2, y2, conf, class_id = box
-            #if conf > conf_threshold:
-            print(conf)
+            print(f"YOLO Confidence: {conf:.2f}")
             detected_boxes.append([x1, y1, x2, y2, conf])
         return detected_boxes
     

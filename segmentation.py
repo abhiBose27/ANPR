@@ -15,7 +15,7 @@ def _get_preprocessed_image(plate_image, debug_dir, debug):
     
     kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (2, 1))
     eroded = cv2.erode(thresh, kernel, iterations=1)
-    dilation = cv2.dilate(eroded, kernel, iterations=3)
+    dilation = cv2.dilate(eroded, kernel, iterations=2)
     ts = datetime.datetime.now().timestamp() * 1000000
     if debug:
         cv2.imwrite(f"{debug_dir}/gray/{ts}_gray.jpg", gray)
