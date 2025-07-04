@@ -1,6 +1,5 @@
 import numpy as np
 import cv2
-import datetime
 
 def auto_canny(image, sigma=0.33):
     v = np.median(image)
@@ -8,13 +7,6 @@ def auto_canny(image, sigma=0.33):
     upper = int(min(255, (1.0 + sigma) * v))
     edged = cv2.Canny(image, lower, upper)
     return edged
-
-def draw_contours(image, bounding_boxes, debug_dir):
-    image_copy = image.copy()
-    for x, y, w, h in bounding_boxes:
-        cv2.rectangle(image_copy, (x, y), (x + w, y + h), (0, 255, 0), 1)
-    ts = datetime.datetime.now().timestamp() * 1000000
-    cv2.imwrite(f"{debug_dir}/contours/{ts}_contours.jpg", image_copy)
 
 def get_label_map():
     class_names = {}

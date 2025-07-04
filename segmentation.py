@@ -1,10 +1,10 @@
 import cv2
+import os
 import datetime
 import numpy as np
-from tools import draw_contours
 
 
-def _get_preprocessed_image(plate_image, debug_dir, debug):
+def _get_preprocessed_image(plate_image, debug, debug_dir="debug/preprocessing"):
     gray = cv2.cvtColor(plate_image, cv2.COLOR_BGR2GRAY)
     blurred = cv2.bilateralFilter(gray, 11, 17, 17)
 
@@ -18,6 +18,13 @@ def _get_preprocessed_image(plate_image, debug_dir, debug):
     dilation = cv2.dilate(eroded, kernel, iterations=2)
     ts = datetime.datetime.now().timestamp() * 1000000
     if debug:
+        os.makedirs(debug_dir, exist_ok=True)
+        os.makedirs(f"{debug_dir}/gray", exist_ok=True)
+        os.makedirs(f"{debug_dir}/blurred", exist_ok=True)
+        os.makedirs(f"{debug_dir}/thresh", exist_ok=True)
+        os.makedirs(f"{debug_dir}/eroded", exist_ok=True)
+        os.makedirs(f"{debug_dir}/dilation", exist_ok=True)
+
         cv2.imwrite(f"{debug_dir}/gray/{ts}_gray.jpg", gray)
         cv2.imwrite(f"{debug_dir}/blurred/{ts}_blurred.jpg", blurred)
         cv2.imwrite(f"{debug_dir}/thresh/{ts}_thresh.jpg", thresh)
@@ -25,7 +32,7 @@ def _get_preprocessed_image(plate_image, debug_dir, debug):
         cv2.imwrite(f"{debug_dir}/dilation/{ts}_dilation.jpg", dilation)
     return dilation
 
-def _get_bounding_boxes(preprocessed_image):
+def _get_bounding_boxes(preprocessed_image, plate_image, debug, debug_dir="debug/preprocessing"):
     contours, _ = cv2.findContours(preprocessed_image, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
     boxes       = [cv2.boundingRect(c) for c in contours]
     sorted_boxes = sorted(boxes, key=lambda box: box[0])
@@ -43,16 +50,31 @@ def _get_bounding_boxes(preprocessed_image):
         bounding_boxes.append((x, y, w, h))
     median_height = np.median([h for _, _, _, h in bounding_boxes])
     bounding_boxes = [(x, y, w, h) for x, y, w, h in bounding_boxes if h >= 0.8 * median_height]
+
+    # Create contours on the plate image
+    # Save it
+    if debug:
+        os.makedirs(debug_dir, exist_ok=True)
+        os.makedirs(f"{debug_dir}/contours", exist_ok=True)
+        for x, y, w, h in bounding_boxes:
+            cv2.rectangle(plate_image, (x, y), (x + w, y + h), (0, 255, 0), 1)
+        ts = datetime.datetime.now().timestamp() * 1000000
+        cv2.imwrite(f"{debug_dir}/contours/{ts}_contours.jpg", plate_image)
     return bounding_boxes
 
 def get_character_images(plate_image, debug, debug_dir="debug/segmentation"):
-    preprocessed_image = _get_preprocessed_image(plate_image, debug_dir, debug)
-    sorted_boxes = _get_bounding_boxes(preprocessed_image)
+    preprocessed_image = _get_preprocessed_image(plate_image, debug)
+    sorted_boxes = _get_bounding_boxes(preprocessed_image, plate_image.copy(), debug)
     char_images = []
     for i, (x, y, w, h) in enumerate(sorted_boxes):
         char = preprocessed_image[y : y + h, x : x + w]
         char = cv2.resize(char, (28, 28), interpolation=cv2.INTER_AREA)
         char_images.append(char)
+    
+    # Save character images
     if debug:
-        draw_contours(plate_image, sorted_boxes, debug_dir)
+        os.makedirs(debug_dir, exist_ok=True)
+        ts = datetime.datetime.now().timestamp() * 1000000
+        for i, char_image in enumerate(char_images):
+            cv2.imwrite(f"{debug_dir}/{ts}_{i}_char.jpg", char_image)
     return char_images
