@@ -1,4 +1,4 @@
-/env/
+/venv/
 /__pycache__/
 /datasets/
 /segmented_chars/
@@ -6,3 +6,4 @@
 preprocess_dataset.py
 plate.yaml
 yolov8n.pt
+/results/

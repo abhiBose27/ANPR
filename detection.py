@@ -1,3 +1,4 @@
+import os
 import cv2
 import datetime
 import numpy as np
@@ -7,19 +8,23 @@ from ultralytics import YOLO
 from sort.sort import Sort
 
 class Detection:
-    def __init__(self, model_yolo_path, model_cnn_path, debug, debug_dir):
+    def __init__(self, model_yolo_path, model_cnn_path, debug, debug_dir, output_dir):
         self.debug = debug
         self.debug_dir = debug_dir
+        self.output_dir = output_dir
         self.seen_plate_ids = {}
         self.tracker = Sort()
         self.model = YOLO(model_yolo_path)
-        self.prediction = Prediction(model_cnn_path, debug) 
+        self.prediction = Prediction(model_cnn_path, debug)
+        if self.debug:
+            os.makedirs(self.debug_dir, exist_ok=True)
+        os.makedirs(self.output_dir, exist_ok=True)
 
     def get_detected_boxes(self, image):
         result = self.model(image, imgsz=320, conf=0.6)[0]
         detected_boxes = []
         for box in result.boxes.data.tolist():
-            x1, y1, x2, y2, conf, class_id = box
+            x1, y1, x2, y2, conf, _ = box
             print(f"YOLO Confidence: {conf:.2f}")
             detected_boxes.append([x1, y1, x2, y2, conf])
         return detected_boxes
@@ -27,18 +32,41 @@ class Detection:
     def detect_image(self, image):
         plate_boxes = self.get_detected_boxes(image)
         for i, plate_box in enumerate(plate_boxes):
-            x1, y1, x2, y2, conf = map(int, plate_box)
+            x1, y1, x2, y2, _ = map(int, plate_box)
             plate_image = image[y1 : y2, x1 : x2]
-            result = self.prediction.get_plate_string(plate_image)
-            plate_string, confidence = result
+            plate_string, confidence = self.prediction.get_plate_string(plate_image)
             print(f"Plate: {plate_string} | Confidence: {confidence:.2f}")
             draw_prediction_canvas(image, (x1, y1, x2, y2), plate_string)
             if self.debug:
                 ts = datetime.datetime.now().timestamp() * 1000000
                 cv2.imwrite(f"{self.debug_dir}/{ts}_{plate_string}_plate.jpg", plate_image)
-            print("🔤 Recognized Plate:", plate_string)
+        
+        ts = datetime.datetime.now().timestamp() * 1000000
+        cv2.imwrite(f"{self.output_dir}/{ts}_{plate_string}_plate.jpg", image)
 
-    def detect_video(self, frame):
+    def detect_video(self, capture):
+        fps = int(capture.get(cv2.CAP_PROP_FPS) / 2)
+        width  = int(capture.get(cv2.CAP_PROP_FRAME_WIDTH))
+        height = int(capture.get(cv2.CAP_PROP_FRAME_HEIGHT))
+        fourcc = cv2.VideoWriter_fourcc(*"mpv4")
+        ts = datetime.datetime.now().timestamp() * 1000000
+        out = cv2.VideoWriter(f"{self.output_dir}/{ts}_video.mp4", fourcc, fps, (width, height))
+
+        while capture.isOpened():
+            ret, frame = capture.read()
+            if not ret:
+                break
+            self.process_frame(frame)
+            cv2.imshow("Number Plate recognition", cv2.resize(frame, (1280, 780)))
+            if cv2.waitKey(1) & 0xFF == ord('q'):
+                break
+            out.write(frame)
+        capture.release()
+        out.release()
+        cv2.destroyAllWindows()
+        self.log_seen_plate_info()
+    
+    def process_frame(self, frame):
         plate_boxes = self.get_detected_boxes(frame)
         plate_boxes_np = np.array(plate_boxes, dtype=np.float32)
 
@@ -54,8 +82,7 @@ class Detection:
             if plate_image.size == 0:
                 continue
             if plate_id not in self.seen_plate_ids:
-                result = self.prediction.get_plate_string(plate_image)
-                plate_string, confidence = result
+                plate_string, confidence = self.prediction.get_plate_string(plate_image)
                 if confidence >= 0.8:
                     self.seen_plate_ids[plate_id] = {
                         "confidence_lvl": "confident",
@@ -85,7 +112,7 @@ class Detection:
                 "plate_image": None
             })
             draw_prediction_canvas(frame, (x1, y1, x2, y2), plate_info["licence"])
-    
+
     def log_seen_plate_info(self):
         if not self.debug:
             return

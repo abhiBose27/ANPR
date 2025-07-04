@@ -5,7 +5,9 @@ from keras.utils import image_dataset_from_directory
 from keras.models import load_model
 
 class CNNModelTrainer:
-    def __init__(self, dataset_paths=[], model_path=None, batch_size=32, img_size=(28, 28), epochs=15, validation_split=0.2, seed=42, nb_classes=36):
+    def __init__(self, best_keras, last_keras, dataset_paths=None, model_path=None, batch_size=32, img_size=(28, 28), epochs=15, validation_split=0.2, seed=42, nb_classes=36):
+        self.best_keras = best_keras
+        self.last_keras = last_keras
         self.model_path = model_path
         self.img_size = img_size
         self.batch_size = batch_size
@@ -100,7 +102,7 @@ class CNNModelTrainer:
 
     def train(self):
         checkpoint = ModelCheckpoint(
-            filepath="cnn_model/best.keras",
+            filepath=self.best_keras,
             monitor="val_accuracy",
             save_best_only=True,
             verbose=1
@@ -115,11 +117,13 @@ class CNNModelTrainer:
     def evaluate_and_save(self):
         loss, accuracy = self.model.evaluate(self.val_ds)
         print(f"Test Accuracy: {accuracy * 100:.2f}%")
-        self.model.save("cnn_model/last.keras")
+        self.model.save(self.last_keras)
 
 if __name__ == "__main__":
     trainer = CNNModelTrainer(
-        dataset_paths=["datasets/cnn_dataset", "datasets/cnn_dataset2/data/training_data"]
+        best_keras="cnn_model/best1.keras",
+        last_keras="cnn_model/last1.keras",
+        dataset_paths=["datasets/cnn_dataset", "datasets/cnn_dataset2"]
     )
     trainer.get_model()
     trainer.get_training_ds()
