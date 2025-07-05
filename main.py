@@ -9,32 +9,42 @@ if __name__ == "__main__":
     model_cnn_path = "cnn_model/best.keras"
     debug_dir = "debug/number_plates"
     output_dir = "results"
-    if len(sys.argv) != 3:
-        print("Error: [--full-image, --full-video, --segmentation] [file_path]")
+    debug = False
+    output = False
+    image_detection = None
+    video_detection = None
+    segmentation = None
 
-    elif sys.argv[1] == "--full-image":
-        image = cv2.imread(sys.argv[2])
-        detection = Detection(
-            model_yolo_path=model_yolo_path,
-            model_cnn_path=model_cnn_path,
-            debug=True,
-            debug_dir=debug_dir,
-            output_dir=output_dir
-        )
-        detection.detect_image(image)
-
-    elif sys.argv[1] == "--full-video":
-        detection = Detection(
-            model_yolo_path=model_yolo_path,
-            model_cnn_path=model_cnn_path,
-            debug=True,
-            debug_dir=debug_dir,
-            output_dir=output_dir
-        )
-        capture = cv2.VideoCapture(sys.argv[2])
+    for i in range(len(sys.argv)):
+        if i == 0:
+            continue
+        if sys.argv[i] == "--debug":
+            debug = True
+        if sys.argv[i] == "--output":
+            output = True
+        if sys.argv[i] == "--full-image" and i + 1 < len(sys.argv):
+            image_detection = sys.argv[i + 1]
+        if sys.argv[i] == "--full-video" and i + 1 < len(sys.argv):
+            video_detection = sys.argv[i + 1]
+        if sys.argv[i] == "--segmentation" and i + 1 < len(sys.argv):
+            segmentation = sys.argv[i + 1]
+    detection = Detection(
+        model_yolo_path=model_yolo_path,
+        model_cnn_path=model_cnn_path,
+        debug=debug,
+        output=output,
+        debug_dir=debug_dir,
+        output_dir=output_dir
+    )
+    if video_detection:
+        capture = cv2.VideoCapture(video_detection)
         detection.detect_video(capture)
-    
-    elif sys.argv[1] == "--segmentation":
-        plate_image = cv2.imread(sys.argv[2])
-        get_character_images(plate_image, debug=True)
-        print("Segmented characters save in debug/segmentation/ directory")
+    elif image_detection:
+        image = cv2.imread(image_detection)
+        detection.detect_image(image)
+    elif segmentation:
+        plate_image = cv2.imread(segmentation)
+        get_character_images(plate_image, debug=debug)
+    else:
+        print("Error: [--full-image, --full-video, --segmentation] [file_path] Optional: [--debug --output]")
+
