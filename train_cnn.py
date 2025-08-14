@@ -115,7 +115,7 @@ class CNNModelTrainer:
         )
 
     def evaluate_and_save(self):
-        loss, accuracy = self.model.evaluate(self.val_ds)
+        _, accuracy = self.model.evaluate(self.val_ds)
         print(f"Test Accuracy: {accuracy * 100:.2f}%")
         self.model.save(self.last_keras)
 

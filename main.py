@@ -5,7 +5,7 @@ from detection import Detection
 
 # Example usage
 if __name__ == "__main__":
-    model_yolo_path = "runs/detect/train10/weights/best.pt"
+    model_yolo_path = "runs/detect/train4/weights/best.pt"
     model_cnn_path = "cnn_model/best.keras"
     debug_dir = "debug/number_plates"
     output_dir = "results"
