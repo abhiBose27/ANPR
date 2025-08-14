@@ -1,6 +1,5 @@
 import cv2
 import sys
-from segmentation import get_character_images
 from detection import Detection
 
 # Example usage
@@ -13,7 +12,6 @@ if __name__ == "__main__":
     output = False
     image_detection = None
     video_detection = None
-    segmentation = None
 
     for i in range(len(sys.argv)):
         if i == 0:
@@ -26,8 +24,6 @@ if __name__ == "__main__":
             image_detection = sys.argv[i + 1]
         if sys.argv[i] == "--full-video" and i + 1 < len(sys.argv):
             video_detection = sys.argv[i + 1]
-        if sys.argv[i] == "--segmentation" and i + 1 < len(sys.argv):
-            segmentation = sys.argv[i + 1]
     detection = Detection(
         model_yolo_path=model_yolo_path,
         model_cnn_path=model_cnn_path,
@@ -42,9 +38,6 @@ if __name__ == "__main__":
     elif image_detection:
         image = cv2.imread(image_detection)
         detection.detect_image(image)
-    elif segmentation:
-        plate_image = cv2.imread(segmentation)
-        get_character_images(plate_image, debug=debug)
     else:
         print("Error: [--full-image, --full-video, --segmentation] [file_path] Optional: [--debug --output]")
 
