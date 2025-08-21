@@ -35,8 +35,12 @@ class PlateManager:
             cv2.imwrite(f"{self.debug_dir}/{ts}_{self.seen_plate_ids[plate_id]["licence"]}_plate.jpg", 
                         self.seen_plate_ids[plate_id]["plate_image"])
     
-    def is_plate_ocr_required(self, plate_id):
-        return plate_id not in self.seen_plate_ids or '?' in self.seen_plate_ids[plate_id]["licence"]
+    def is_plate_ocr_required(self, plate_id, bounding_boxes):
+        if plate_id not in self.seen_plate_ids:
+            return True
+        if '?' in self.seen_plate_ids[plate_id]["licence"]:
+            return True 
+        return (len(bounding_boxes) > len(self.seen_plate_ids[plate_id]["licence"]) and len(bounding_boxes) >= 6 and len(bounding_boxes) <= 8)
     
     def update_seen_plate_ids(self, plate_id, plate_info):
         self.seen_plate_ids[plate_id] = plate_info
@@ -79,7 +83,7 @@ class Detection:
             plate_image = image[y1 : y2, x1 : x2]
 
             preprocessed_image = self.preprocessing.get_preprocessed_image(plate_image)
-            bounding_boxes = self.preprocessing.get_bounding_boxes(preprocessed_image, plate_image.copy())
+            bounding_boxes = self.preprocessing.get_bounding_boxes(preprocessed_image, plate_image)
             char_images = self.segmentation.get_character_images(preprocessed_image, bounding_boxes)
             plate_string, confidence = self.prediction.run_batch_ocr(char_images)
 
@@ -127,13 +131,14 @@ class Detection:
             if plate_image.size == 0:
                 continue
             
-            if self.plate_manager.is_plate_ocr_required(plate_id):
-                preprocessed_image = self.preprocessing.get_preprocessed_image(plate_image)
-                bounding_boxes = self.preprocessing.get_bounding_boxes(preprocessed_image, plate_image.copy())
+            preprocessed_image = self.preprocessing.get_preprocessed_image(plate_image)
+            bounding_boxes = self.preprocessing.get_bounding_boxes(preprocessed_image, plate_image)
+
+            if self.plate_manager.is_plate_ocr_required(plate_id, bounding_boxes):
                 char_images = self.segmentation.get_character_images(preprocessed_image, bounding_boxes)
                 plate_string, confidence = self.prediction.run_batch_ocr(char_images)
 
-                if len(plate_string) <= 8 and len(plate_string) >= 6 and confidence >= 0.8:
+                if confidence >= 0.8:
                     self.plate_manager.update_seen_plate_ids(plate_id, {
                         "confidence_lvl": confidence,
                         "licence": plate_string,

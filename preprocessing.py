@@ -54,10 +54,12 @@ class Preprocessing:
             bounding_boxes.append((x, y, w, h))
         median_height = np.median([h for _, _, _, h in bounding_boxes])
         bounding_boxes = [(x, y, w, h) for x, y, w, h in bounding_boxes if  h / median_height >= 0.8]
+
         if self.debug:
+            plate_image_copy = plate_image.copy()
             os.makedirs(f"{self.debug_dir}/contours", exist_ok=True)
             for x, y, w, h in bounding_boxes:
-                cv2.rectangle(plate_image, (x, y), (x + w, y + h), (0, 255, 0), 1)
+                cv2.rectangle(plate_image_copy, (x, y), (x + w, y + h), (0, 255, 0), 1)
             ts = datetime.datetime.now().timestamp() * 1000000
-            cv2.imwrite(f"{self.debug_dir}/contours/{ts}_contours.jpg", plate_image)
+            cv2.imwrite(f"{self.debug_dir}/contours/{ts}_contours.jpg", plate_image_copy)
         return bounding_boxes
