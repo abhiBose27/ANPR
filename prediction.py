@@ -5,9 +5,10 @@ from tools import get_label_map
 
 
 class OCREngine:
-    def __init__(self, model_path):
+    def __init__(self, model_path, prediction_threshold=0.8):
         self.model = load_model(model_path)
         self.label_map = get_label_map()
+        self.prediction_threshold = prediction_threshold
 
     def run_batch_ocr(self, char_images):
         total_confidence = 0
@@ -19,7 +20,7 @@ class OCREngine:
         prediction_classes = np.argmax(predictions, axis=1)
         for prediction, pred_class in zip(predictions, prediction_classes):
             confidence = prediction[pred_class]
-            if confidence < 0.6:
+            if confidence < self.prediction_threshold:
                 predicted_string += "?"
                 continue
             predicted_string += self.label_map[int(pred_class)]

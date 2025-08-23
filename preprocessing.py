@@ -13,7 +13,9 @@ class Preprocessing:
 
     def get_preprocessed_image(self, plate_image):
         gray = cv2.cvtColor(plate_image, cv2.COLOR_BGR2GRAY)
-        blurred = cv2.bilateralFilter(gray, 11, 17, 17)
+        clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8,8))
+        cl1 =  clahe.apply(gray)
+        blurred = cv2.bilateralFilter(cl1, 11, 17, 17)
 
         thresh = cv2.adaptiveThreshold(
             blurred, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
@@ -25,12 +27,14 @@ class Preprocessing:
         ts = datetime.datetime.now().timestamp() * 1000000
         if self.debug:
             os.makedirs(f"{self.debug_dir}/gray", exist_ok=True)
+            os.makedirs(f"{self.debug_dir}/histo_equ", exist_ok=True)
             os.makedirs(f"{self.debug_dir}/blurred", exist_ok=True)
             os.makedirs(f"{self.debug_dir}/thresh", exist_ok=True)
             os.makedirs(f"{self.debug_dir}/eroded", exist_ok=True)
             os.makedirs(f"{self.debug_dir}/dilation", exist_ok=True)
 
             cv2.imwrite(f"{self.debug_dir}/gray/{ts}_gray.jpg", gray)
+            cv2.imwrite(f"{self.debug_dir}/histo_equ/{ts}_histo_equ.jpg", cl1)
             cv2.imwrite(f"{self.debug_dir}/blurred/{ts}_blurred.jpg", blurred)
             cv2.imwrite(f"{self.debug_dir}/thresh/{ts}_thresh.jpg", thresh)
             cv2.imwrite(f"{self.debug_dir}/eroded/{ts}_eroded.jpg", eroded)

@@ -140,7 +140,6 @@ class Detection:
 
                 if confidence >= 0.8:
                     self.plate_manager.update_seen_plate_ids(plate_id, {
-                        "confidence_lvl": confidence,
                         "licence": plate_string,
                         "plate_image": plate_image
                     })
