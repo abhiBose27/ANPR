@@ -48,16 +48,16 @@ class Preprocessing:
         bounding_boxes = []
 
         for i, (x, y, w, h) in enumerate(sorted_boxes):
-            roi_area = w * h
             aspect_ratio = w / float(h)
             roi = preprocessed_image[y : y + h, x : x + w]
             black_pixels = (w * h) - cv2.countNonZero(roi)
             black_ratio = black_pixels / (w * h)
-            if w > h or not (0.2 < aspect_ratio < 0.8) or roi_area < 500 or not (0.25 < black_ratio < 0.8):
+            if w > h or not (0.2 < aspect_ratio < 0.8) or not (0.25 < black_ratio < 0.7):
                 continue
             bounding_boxes.append((x, y, w, h))
         median_height = np.median([h for _, _, _, h in bounding_boxes])
-        bounding_boxes = [(x, y, w, h) for x, y, w, h in bounding_boxes if  h / median_height >= 0.8]
+        median_width = np.median([w for _, _, w, _ in bounding_boxes])
+        bounding_boxes = [(x, y, w, h) for x, y, w, h in bounding_boxes if (0.8 * median_height <= h <= 1.2 * median_height) and (0.8 * median_width <= w <= 1.2 * median_width)]
 
         if self.debug:
             plate_image_copy = plate_image.copy()
