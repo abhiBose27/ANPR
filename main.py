@@ -23,7 +23,7 @@ if __name__ == "__main__":
         if sys.argv[i] == "--full-video" and i + 1 < len(sys.argv):
             video_detection = sys.argv[i + 1]
 
-    if not video_detection or not image_detection:
+    if not video_detection and not image_detection:
         print("Error: [--full-image, --full-video, --segmentation] [file_path] Optional: [--debug --output]")
         exit(1)
 
