@@ -1,6 +1,4 @@
-import cv2
 import sys
-from detection import Detection
 
 # Example usage
 if __name__ == "__main__":
@@ -24,6 +22,14 @@ if __name__ == "__main__":
             image_detection = sys.argv[i + 1]
         if sys.argv[i] == "--full-video" and i + 1 < len(sys.argv):
             video_detection = sys.argv[i + 1]
+
+    if not video_detection or not image_detection:
+        print("Error: [--full-image, --full-video, --segmentation] [file_path] Optional: [--debug --output]")
+        exit(1)
+
+    import cv2
+    from detection import Detection
+
     detection = Detection(
         model_yolo_path=model_yolo_path,
         model_cnn_path=model_cnn_path,
@@ -38,6 +44,4 @@ if __name__ == "__main__":
     elif image_detection:
         image = cv2.imread(image_detection)
         detection.detect_image(image)
-    else:
-        print("Error: [--full-image, --full-video, --segmentation] [file_path] Optional: [--debug --output]")
 
